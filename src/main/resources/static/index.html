@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GTTC Attendance System</title>
+<style>
+  body { font-family: Arial; background: #f0f2f5; margin: 0; }
+  .header { background: #1a237e; color: white; 
+            padding: 20px; text-align: center; }
+  .header h1 { margin: 0; font-size: 24px; }
+  .container { max-width: 900px; margin: 20px auto; padding: 0 15px; }
+  .card { background: white; border-radius: 10px; 
+          padding: 20px; margin-bottom: 20px; 
+          box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+  .card h2 { color: #1a237e; border-bottom: 2px solid #1a237e; 
+             padding-bottom: 10px; }
+  input, select { width: 100%; padding: 10px; margin: 8px 0; 
+                  border: 1px solid #ddd; border-radius: 5px; 
+                  box-sizing: border-box; font-size: 14px; }
+  .btn { padding: 10px 20px; border: none; border-radius: 5px; 
+         cursor: pointer; font-size: 14px; margin: 5px; }
+  .btn-blue { background: #1a237e; color: white; }
+  .btn-green { background: #2e7d32; color: white; }
+  .btn-red { background: #c62828; color: white; }
+  table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+  th { background: #1a237e; color: white; padding: 12px; text-align: left; }
+  td { padding: 10px; border-bottom: 1px solid #eee; }
+  tr:hover { background: #f5f5f5; }
+  .present { background: #e8f5e9; color: #2e7d32; 
+             padding: 5px 10px; border-radius: 20px; }
+  .absent { background: #ffebee; color: #c62828; 
+            padding: 5px 10px; border-radius: 20px; }
+  .tabs { display: flex; margin-bottom: 20px; }
+  .tab { padding: 12px 25px; cursor: pointer; 
+         background: #ddd; border-radius: 5px 5px 0 0; margin-right: 5px; }
+  .tab.active { background: #1a237e; color: white; }
+  .section { display: none; }
+  .section.active { display: block; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>🏫 GTTC Attendance Management System</h1>
+  <p style="margin:5px 0">Government Tool Room and Training Centre</p>
+</div>
+
+<div class="container">
+
+  <div class="tabs">
+    <div class="tab active" onclick="showTab('students')">👨‍🎓 Students</div>
+    <div class="tab" onclick="showTab('attendance')">📋 Attendance</div>
+    <div class="tab" onclick="showTab('report')">📊 Report</div>
+  </div>
+
+  <!-- STUDENTS SECTION -->
+  <div id="students" class="section active">
+    <div class="card">
+      <h2>➕ Add Student</h2>
+      <input type="text" id="studentName" placeholder="Student Name" />
+      <input type="text" id="rollNumber" placeholder="Roll Number" />
+      <input type="text" id="course" placeholder="Course (e.g. Java)" />
+      <button class="btn btn-blue" onclick="addStudent()">Add Student</button>
+    </div>
+    <div class="card">
+      <h2>👨‍🎓 Student List</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>ID</th><th>Name</th>
+            <th>Roll No</th><th>Course</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody id="studentTable"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ATTENDANCE SECTION -->
+  <div id="attendance" class="section">
+    <div class="card">
+      <h2>📋 Mark Attendance</h2>
+      <select id="attendanceStudent">
+        <option value="">-- Select Student --</option>
+      </select>
+      <input type="date" id="attendanceDate" />
+      <select id="attendanceStatus">
+        <option value="Present">✅ Present</option>
+        <option value="Absent">❌ Absent</option>
+      </select>
+      <button class="btn btn-green" onclick="markAttendance()">
+        Mark Attendance
+      </button>
+    </div>
+  </div>
+
+  <!-- REPORT SECTION -->
+  <div id="report" class="section">
+    <div class="card">
+      <h2>📊 Attendance Report</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Student</th><th>Date</th><th>Status</th>
+          </tr>
+        </thead>
+        <tbody id="reportTable"></tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+
+<script>
+const API = "http://localhost:8081";
+
+function showTab(tab) {
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.getElementById(tab).classList.add('active');
+  event.target.classList.add('active');
+  if(tab === 'report') loadReport();
+}
+
+async function loadStudents() {
+  const res = await fetch(`${API}/api/students`);
+  const students = await res.json();
+  const table = document.getElementById('studentTable');
+  const select = document.getElementById('attendanceStudent');
+  table.innerHTML = '';
+  select.innerHTML = '<option value="">-- Select Student --</option>';
+  students.forEach(s => {
+    table.innerHTML += `<tr>
+      <td>${s.id}</td><td>${s.name}</td>
+      <td>${s.rollNumber}</td><td>${s.course}</td>
+      <td><button class="btn btn-red" 
+          onclick="deleteStudent(${s.id})">Delete</button></td>
+    </tr>`;
+    select.innerHTML += `<option value="${s.id}">${s.name}</option>`;
+  });
+}
+
+async function addStudent() {
+  const name = document.getElementById('studentName').value;
+  const rollNumber = document.getElementById('rollNumber').value;
+  const course = document.getElementById('course').value;
+  if(!name || !rollNumber || !course) {
+    alert('ಎಲ್ಲಾ fields fill ಮಾಡು!'); return;
+  }
+  await fetch(`${API}/api/students`, {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({name, rollNumber, course})
+  });
+  document.getElementById('studentName').value = '';
+  document.getElementById('rollNumber').value = '';
+  document.getElementById('course').value = '';
+  loadStudents();
+  alert('Student Added! ✅');
+}
+
+async function deleteStudent(id) {
+  if(confirm('Delete ಮಾಡಬೇಕಾ?')) {
+    await fetch(`${API}/api/students/${id}`, {method: 'DELETE'});
+    loadStudents();
+  }
+}
+
+async function markAttendance() {
+  const studentId = document.getElementById('attendanceStudent').value;
+  const date = document.getElementById('attendanceDate').value;
+  const status = document.getElementById('attendanceStatus').value;
+  if(!studentId || !date) {
+    alert('Student ಮತ್ತು Date select ಮಾಡು!'); return;
+  }
+  await fetch(`${API}/api/attendance`, {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({student:{id:studentId}, date, status})
+  });
+  alert('Attendance Marked! ✅');
+}
+
+async function loadReport() {
+  const res = await fetch(`${API}/api/attendance`);
+  const data = await res.json();
+  const table = document.getElementById('reportTable');
+  table.innerHTML = '';
+  data.forEach(a => {
+    table.innerHTML += `<tr>
+      <td>${a.student.name}</td>
+      <td>${a.date}</td>
+      <td><span class="${a.status.toLowerCase()}">${a.status}</span></td>
+    </tr>`;
+  });
+}
+
+// Set today's date
+document.getElementById('attendanceDate').valueAsDate = new Date();
+loadStudents();
+</script>
+</body>
+</html>
