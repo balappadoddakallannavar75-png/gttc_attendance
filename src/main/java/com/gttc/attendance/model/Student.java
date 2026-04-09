@@ -17,4 +17,6 @@ public class Student {
     private String rollNumber;
 
     private String course;
+
+    private String email;
 }
