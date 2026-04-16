@@ -38,13 +38,9 @@ public class AuthController {
             User user = userOptional.get();
             // In a production app, passwords should be encrypted.
             if (user.getPassword().equals(loginRequest.getPassword())) {
-                if (loginRequest.getDepartment() != null && user.getDepartment() != null 
-                    && !user.getDepartment().equalsIgnoreCase(loginRequest.getDepartment())) {
-                    return ResponseEntity.status(401).body("Error: Department mismatch. You are accessing the wrong department.");
-                }
                 return ResponseEntity.ok(user);
             }
         }
-        return ResponseEntity.status(401).body("Error: Invalid username, password, or department");
+        return ResponseEntity.status(401).body("Error: Invalid username or password");
     }
 }

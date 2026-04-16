@@ -19,13 +19,6 @@
             
             <input type="text" id="username" placeholder="Username" autocomplete="off" />
             <input type="password" id="password" placeholder="Password" />
-            <select id="department" style="width:100%; padding:15px; margin-bottom:15px; border-radius:10px; border:1px solid var(--glass-border); background:var(--bg-card); color:var(--text-main); font-family:inherit;">
-                <option value="" disabled selected>Select Supervised Department</option>
-                <option value="Computer Science">Computer Science</option>
-                <option value="Civil Engineering">Civil Engineering</option>
-                <option value="Mechanical Engineering">Mechanical Engineering</option>
-                <option value="Electrical Engineering">Electrical Engineering</option>
-            </select>
             
             <button class="btn btn-primary" id="loginBtn" onclick="login()">Enter Secure Portal</button>
             
@@ -64,17 +57,16 @@
         async function login() {
             const username = document.getElementById('username').value;
             const password = document.getElementById('password').value;
-            const department = document.getElementById('department').value;
             const btn = document.getElementById('loginBtn');
 
-            if(!username || !password || !department) { showToast('Please enter username, password and department.', 'error'); return; }
+            if(!username || !password) { showToast('Please enter username and password.', 'error'); return; }
 
             btn.innerText = "Verifying Credentials...";
             try {
                 const res = await fetch(`${API}/api/auth/login`, {
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({username, password, department})
+                    body: JSON.stringify({username, password})
                 });
                 
                 if (res.ok) {

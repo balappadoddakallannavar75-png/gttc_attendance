@@ -20,13 +20,6 @@
             <input type="text" id="fullName" placeholder="Full Legal Name" autocomplete="off" />
             <input type="text" id="username" placeholder="Choose a Username" autocomplete="off" />
             <input type="password" id="password" placeholder="Create a secure Password" />
-            <select id="department" style="width:100%; padding:15px; margin-bottom:15px; border-radius:10px; border:1px solid var(--glass-border); background:var(--bg-card); color:var(--text-main); font-family:inherit;">
-                <option value="" disabled selected>Select Supervised Department</option>
-                <option value="Computer Science">Computer Science</option>
-                <option value="Civil Engineering">Civil Engineering</option>
-                <option value="Mechanical Engineering">Mechanical Engineering</option>
-                <option value="Electrical Engineering">Electrical Engineering</option>
-            </select>
             
             <button class="btn btn-blue" id="regBtn" onclick="register()">Create Admin Account</button>
             
@@ -63,17 +56,16 @@
             const fullName = document.getElementById('fullName').value;
             const username = document.getElementById('username').value;
             const password = document.getElementById('password').value;
-            const department = document.getElementById('department').value;
             const btn = document.getElementById('regBtn');
 
-            if(!username || !password || !fullName || !department) { showToast('Please fill all fields including Department.', 'error'); return; }
+            if(!username || !password || !fullName) { showToast('Please fill all fields.', 'error'); return; }
 
             btn.innerText = "Registering...";
             try {
                 const res = await fetch(`${API}/api/auth/register`, {
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({fullName, username, password, department})
+                    body: JSON.stringify({fullName, username, password})
                 });
                 const responseData = await res.text();
                 
