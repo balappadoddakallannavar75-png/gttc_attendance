@@ -48,3 +48,4 @@ The Java application builds dependencies securely on port `8081`.
 ### 4. Exploring the Production Client
 The custom SPA front-end executes locally via File Protocol rendering on edge! Simply execute the `index.html` file using any Chromium or Webkit browser to dive seamlessly into the fully authorized GTTC Portal dashboard!
 
+
