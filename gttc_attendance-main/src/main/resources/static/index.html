@@ -1,0 +1,1171 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard | GTTC Premium Portal</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <script src="js/app.js"></script>
+</head>
+
+<body>
+
+    <div class="dashboard-wrapper">
+        <div class="glass top-nav">
+            <div class="app-title"> GTTC Attendance Management System</div>
+            <div class="user-badge">
+                <button class="btn btn-small" onclick="toggleTheme()" id="themeBtn"
+                    style="background:var(--glass-bg); color:var(--text-main); border:1px solid var(--glass-border); width:35px; height:35px; padding:0; border-radius:50%; font-size:16px;"
+                    title="Toggle Light/Dark Theme">☀️</button>
+                <span id="welcomeUser">Welcome</span>
+                <button class="logout-btn" onclick="logout()">⛔ Logout</button>
+            </div>
+        </div>
+
+        <div class="dashboard-grid">
+
+            <!-- SIDEBAR NAVIGATION -->
+            <div class="sidebar glass">
+                <button class="nav-item active" onclick="switchView('students', this)">
+                    👨‍🎓 Student Directory
+                </button>
+                <button class="nav-item" onclick="switchView('attendance', this)">
+                    📋 Record Attendance
+                </button>
+                <button class="nav-item" onclick="switchView('report', this)">
+                    📊 Analytics Report
+                </button>
+                <button class="nav-item" onclick="switchView('hallticket', this)">
+                    🎟️ HallTicket Manager
+                </button>
+            </div>
+
+            <!-- CONTENT AREA -->
+            <div class="content-area">
+
+                <!-- 👨‍🎓 STUDENTS VIEW -->
+                <div id="students" class="content-section active">
+
+                    <div class="card-grid">
+                        <div class="glass stat-card green">
+                            <div class="stat-icon">🎓</div>
+                            <div class="stat-info">
+                                <h3 id="totalStudentsStat">0</h3>
+                                <p>Total Enrolled</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="two-col-layout">
+                        <!-- Left Layout: Enroll Block -->
+                        <div class="glass enroll-box" style="margin: 0; min-width: 250px;">
+                            <div class="section-header" style="border: none; padding-bottom: 5px;">
+                                <div>
+                                    <h2>➕ Enroll New Student</h2>
+                                    <p class="section-desc">Add a new student.</p>
+                                </div>
+                            </div>
+                            <div class="form-grid" style="grid-template-columns: 1fr;">
+                                <input type="text" id="studentName" placeholder="Full Name" autocomplete="off" />
+                                <input type="text" id="rollNumber" placeholder="Roll No. (e.g. CS001)"
+                                    autocomplete="off" />
+                                <input type="text" id="course" placeholder="Course / Department" autocomplete="off" />
+                                <input type="email" id="studentEmail" placeholder="Email Address" autocomplete="off" />
+                                <button class="btn btn-blue" onclick="addStudent()">Register Student</button>
+                            </div>
+                        </div>
+
+                        <!-- Right Layout: Table Block -->
+                        <div class="glass" style="padding: 15px;">
+                            <div class="section-header">
+                                <div>
+                                    <h2>📚 Current Master Directory</h2>
+                                    <div style="display: flex; gap: 15px; margin-top: 10px; align-items: center;">
+                                        <select id="courseFilter"
+                                            style="width: auto; margin:0; padding:6px 10px; border-radius:6px; font-size:13px; font-weight:600;"
+                                            onchange="filterStudentsList()">
+                                            <option value="ALL">All Departments</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div style="display: flex; gap: 10px;">
+                                    <button class="btn btn-small btn-blue" onclick="evaluateAllStudents(this)">Evaluate
+                                        All Students ✉️</button>
+                                    <button class="btn btn-small btn-primary" onclick="loadStudents()">↻
+                                        Refresh</button>
+                                </div>
+                            </div>
+                            <div class="table-responsive">
+                                <table>
+                                    <thead>
+                                        <tr>
+                                            <th>Student Details</th>
+                                            <th>Roll Number</th>
+                                            <th>Email Address</th>
+                                            <th>Total Attendance Stats</th>
+                                            <th>Administrative Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="studentTable"></tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 📋 ATTENDANCE VIEW -->
+                <div id="attendance" class="content-section">
+                    <div class="glass" style="padding: 15px;">
+                        <div class="section-header">
+                            <div>
+                                <h2>📋 Daily Log Register</h2>
+                                <p class="section-desc">Select a date and quickly mark attendance for each student
+                                    below.</p>
+                            </div>
+                        </div>
+
+                        <div
+                            style="margin-bottom: 15px; display: flex; align-items: center; justify-content: space-between;">
+                            <label style="color:var(--text-main); font-size:18px; font-weight:700;"
+                                id="uiMonthYear">Loading...</label>
+                            <div style="display:flex; align-items:center; gap:10px;">
+                                <select id="attCourseFilter"
+                                    style="width: auto; margin:0; padding:6px 10px; background:var(--glass-bg); border:1px solid var(--glass-border); color:var(--text-main); border-radius:6px; font-size:13px; font-weight:600;"
+                                    onchange="loadBulkAttendance()">
+                                    <option value="ALL">All Departments</option>
+                                </select>
+                                <span style="font-size:13px; color:var(--text-muted); display:none;">Jump to:</span>
+                                <input type="date" id="bulkAttDate"
+                                    style="width: auto; margin:0; padding: 6px 12px; font-size: 13px; background:var(--glass-bg); border:1px solid var(--glass-border); color:var(--text-main); border-radius:8px;"
+                                    onchange="loadBulkAttendance()" />
+                            </div>
+                        </div>
+
+                        <!-- Visual App-Like Horizontal Calendar Scroller -->
+                        <div class="calendar-row" id="calendarRow"
+                            style="display: flex; gap: 10px; overflow-x: auto; padding-bottom: 15px; margin-bottom: 20px; scrollbar-width: none; -ms-overflow-style: none;">
+                            <!-- Auto-populated by App JS -->
+                        </div>
+
+                        <div class="table-responsive">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Student Details</th>
+                                        <th>Roll Number</th>
+                                        <th>Attendance Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="bulkAttTable"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 📊 REPORT VIEW -->
+                <div id="report" class="content-section">
+
+                    <div class="card-grid" style="margin-bottom: 20px;">
+                        <div class="glass stat-card">
+                            <div class="stat-icon">📅</div>
+                            <div class="stat-info">
+                                <h3 id="reportTotalLogs">0</h3>
+                                <p>Total Logs Found</p>
+                            </div>
+                        </div>
+                        <div class="glass stat-card green">
+                            <div class="stat-icon">✅</div>
+                            <div class="stat-info">
+                                <h3 id="reportPresentLogs">0</h3>
+                                <p>Present Entries</p>
+                            </div>
+                        </div>
+                        <div class="glass stat-card red">
+                            <div class="stat-icon">❌</div>
+                            <div class="stat-info">
+                                <h3 id="reportAbsentLogs">0</h3>
+                                <p>Absent Entries</p>
+                            </div>
+                        </div>
+                        <div class="glass stat-card">
+                            <div class="stat-icon">📊</div>
+                            <div class="stat-info">
+                                <h3 id="reportAvgLogs">0%</h3>
+                                <p>Presence Ratio</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="glass" style="padding: 15px;">
+                        <div class="section-header">
+                            <div>
+                                <h2>📊 Comprehensive Analytics</h2>
+                                <div style="display: flex; gap: 15px; margin-top: 10px; align-items: center;">
+                                    <select id="reportCourseFilter"
+                                        style="width: auto; margin:0; padding:6px 10px; border-radius:6px; font-size:13px; font-weight:600;"
+                                        onchange="loadReport()">
+                                        <option value="ALL">All Departments</option>
+                                    </select>
+                                    <input type="date" id="reportDateFilter"
+                                        style="width: auto; margin:0; padding:6px 10px; border-radius:6px; font-size:13px;"
+                                        onchange="loadReport()" />
+                                    <button class="btn btn-small"
+                                        style="background:var(--bg-base); color:var(--text-main); border:1px solid var(--glass-border);"
+                                        onclick="clearReportFilter()">Clear Filters ❌</button>
+                                </div>
+                            </div>
+                            <button class="btn btn-small btn-primary" onclick="loadReport()">↻ Refresh</button>
+                        </div>
+
+                        <div class="table-responsive">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Registered Student</th>
+                                        <th>Date Logged</th>
+                                        <th>System Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="reportTable"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 🎟️ HALLTICKET VIEW -->
+                <div id="hallticket" class="content-section">
+                    <div class="glass" style="padding: 15px;">
+                        <div class="section-header">
+                            <div>
+                                <h2>🎟️ HallTicket Manager</h2>
+                                <p class="section-desc">Search for students and generate examination hall tickets.</p>
+                            </div>
+                            <div style="display: flex; gap: 10px; align-items: center;">
+                                <input type="text" id="hallticketSearch" placeholder="Search by name or roll no..."
+                                    style="margin:0; padding:6px 12px; border-radius:6px; font-size:13px; background:var(--glass-bg); border:1px solid var(--glass-border); color:var(--text-main); min-width: 200px;"
+                                    onkeyup="filterHallTicketList()" />
+                                <button class="btn btn-small btn-primary" onclick="loadHallTicketStudents()">↻
+                                    Refresh</button>
+                            </div>
+                        </div>
+
+                        <div class="table-responsive">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Student Details</th>
+                                        <th>Roll Number</th>
+                                        <th>Email Address</th>
+                                        <th>Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="hallticketTable"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- 🎟️ HALL TICKET MODAL -->
+        <div id="htModal"
+            style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 9999; justify-content: center; align-items: center; background: rgba(15, 23, 42, 0.85); backdrop-filter: blur(4px);">
+            <div
+                style="background: white; color: black; border-radius: 12px; width: 950px; max-width: 95vw; max-height: 95vh; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 10px 40px rgba(0,0,0,0.5);">
+                <!-- Header Actions -->
+                <div
+                    style="display: flex; justify-content: space-between; align-items: center; padding: 15px 25px; background: #f8fafc; border-bottom: 1px solid #e2e8f0;">
+                    <div>
+                        <h3 style="margin: 0; color: #0f172a; font-family: 'Outfit', sans-serif;">🎟️ Hall Ticket
+                            Preview</h3>
+                        <p id="htWarning"
+                            style="margin: 5px 0 0 0; font-size: 13px; font-weight: bold; color: #ef4444; display: none;">
+                            ⚠️ ATTENDANCE SHORTAGE (< 80%). Issue strictly at your discretion.</p>
+                    </div>
+                    <div style="display: flex; gap: 10px;">
+                        <button class="btn btn-small"
+                            style="background:#e2e8f0; color:#334155; border: 1px solid #cbd5e1;"
+                            onclick="closeHtModal()">✖ Close</button>
+                    </div>
+                </div>
+
+                <!-- Ticket Content (Scrollable) -->
+                <div
+                    style="padding: 30px; overflow-y: auto; background: #cbd5e1; display:flex; justify-content:center;">
+                    <div id="htContent" style="background: white; box-shadow: 0 0 15px rgba(0,0,0,0.1);">
+                        <!-- layout will be injected here via JS -->
+                    </div>
+                </div>
+
+                <!-- Footer Actions -->
+                <div
+                    style="padding: 15px 25px; background: #f8fafc; border-top: 1px solid #e2e8f0; display: flex; justify-content: flex-end;">
+                    <button id="htDownloadBtn" class="btn btn-blue"
+                        style="font-size: 15px; padding: 8px 20px; border-radius: 8px;" onclick="downloadCurrentHt()">💾
+                        Save / Download PDF</button>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- MAIN LOGIC -->
+    <script>
+        // --- THEME ENGINE ---
+        let isLightMode = localStorage.getItem('theme') === 'light';
+        if (isLightMode) document.documentElement.setAttribute('data-theme', 'light');
+
+        function updateThemeBtn() {
+            const btn = document.getElementById('themeBtn');
+            if (btn) btn.innerText = isLightMode ? '🌙' : '☀️';
+        }
+
+        function toggleTheme() {
+            isLightMode = !isLightMode;
+            if (isLightMode) {
+                document.documentElement.setAttribute('data-theme', 'light');
+                localStorage.setItem('theme', 'light');
+            } else {
+                document.documentElement.removeAttribute('data-theme');
+                localStorage.setItem('theme', 'dark');
+            }
+            updateThemeBtn();
+        }
+
+        // Check Authentication right away
+        const currentUser = requireAuth();
+        if (currentUser) {
+            document.getElementById('welcomeUser').innerText = `Hello, ${currentUser.fullName || currentUser.username} (${currentUser.department || 'Admin'})`;
+            updateThemeBtn();
+
+            const courseInput = document.getElementById('course');
+            if (courseInput && currentUser.department) {
+                courseInput.value = currentUser.department;
+                courseInput.readOnly = true;
+                courseInput.style.opacity = '0.7';
+            }
+
+            loadStudents();
+        }
+
+        function switchView(viewId, element) {
+            document.querySelectorAll('.content-section').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+
+            document.getElementById(viewId).classList.add('active');
+            element.classList.add('active');
+
+            if (viewId === 'students') loadStudents();
+            if (viewId === 'attendance') loadBulkAttendance();
+            if (viewId === 'report') loadReport();
+            if (viewId === 'hallticket') loadHallTicketStudents();
+        }
+
+        let globalStudentsData = [];
+        let globalStatsData = {};
+
+        // --- STUDENTS LOGIC ---
+        async function loadStudents() {
+            try {
+                const res = await fetch(`${API}/api/students`);
+                let students = await res.json();
+
+                if (currentUser && currentUser.department) {
+                    students = students.filter(s => s.course && s.course.toLowerCase() === currentUser.department.toLowerCase());
+                }
+
+                const attRes = await fetch(`${API}/api/attendance`);
+                const allAtt = await attRes.json();
+
+                const stats = {};
+                students.forEach(s => stats[s.id] = { total: 0, present: 0 });
+
+                // Deduplicate historically corrupted database logs globally using a Hash Map
+                const uniqueAtts = {};
+                allAtt.forEach(a => {
+                    uniqueAtts[`${a.student.id}_${a.date}`] = a;
+                });
+
+                Object.values(uniqueAtts).forEach(a => {
+                    if (stats[a.student.id]) {
+                        stats[a.student.id].total++;
+                        if (a.status === 'Present') stats[a.student.id].present++;
+                    }
+                });
+
+                globalStudentsData = students;
+                globalStatsData = stats;
+
+                const courseSelect = document.getElementById('courseFilter');
+                if (courseSelect) {
+                    const uniqueCourses = [...new Set(students.map(s => s.course).filter(c => c))];
+                    const currentCourse = courseSelect.value;
+                    courseSelect.innerHTML = '';
+                    if (currentUser && currentUser.department) {
+                        courseSelect.innerHTML += `<option value="${currentUser.department}">${currentUser.department} Only</option>`;
+                        courseSelect.value = currentUser.department;
+                        courseSelect.disabled = true;
+                    } else {
+                        courseSelect.innerHTML = '<option value="ALL">All Departments</option>';
+                        uniqueCourses.forEach(c => {
+                            courseSelect.innerHTML += `<option value="${c}">${c}</option>`;
+                        });
+                        if (uniqueCourses.includes(currentCourse)) courseSelect.value = currentCourse;
+                    }
+                }
+
+                filterStudentsList();
+            } catch (e) { showToast('Error reading student database.', 'error'); }
+        }
+
+        function filterStudentsList() {
+            const courseSelect = document.getElementById('courseFilter');
+            const targetCourse = courseSelect ? courseSelect.value : "ALL";
+
+            let displayStudents = globalStudentsData;
+            if (targetCourse !== "ALL") {
+                displayStudents = globalStudentsData.filter(s => s.course === targetCourse);
+            }
+
+            document.getElementById('totalStudentsStat').innerText = displayStudents.length || 0;
+
+            const tbody = document.getElementById('studentTable');
+            tbody.innerHTML = '';
+
+            if (displayStudents.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="5" class="text-center" style="color:var(--text-muted); padding:30px;">No students found for this department filter.</td></tr>`;
+                return;
+            }
+
+            displayStudents.forEach(s => {
+                const st = globalStatsData[s.id];
+                let pct = st.total === 0 ? 0 : Math.round((st.present / st.total) * 100);
+                let statHtml = `<span style="color:var(--text-main); font-weight:600; font-size:14px;">${st.present}/${st.total} <br><span style="color:${pct >= 80 ? 'var(--success)' : 'var(--danger)'}; font-size:12px;">(${pct}% Score)</span></span>`;
+
+                tbody.innerHTML += `
+                    <tr>
+                        <td>
+                            <strong style="font-size:16px;">${s.name}</strong><br>
+                            <span style="color:var(--text-muted); font-size:13px; background:rgba(255,255,255,0.06); padding:2px 6px; border-radius:4px;">${s.course}</span>
+                        </td>
+                        <td><span style="font-family:monospace; font-size:14px; color:var(--text-main); opacity:0.8; font-weight:600;">${s.rollNumber}</span></td>
+                        <td>${s.email ? `<span style="border-bottom:1px solid var(--glass-border);">${s.email}</span>` : '<span style="color:#64748b; font-style:italic;">Missing</span>'}</td>
+                        <td>${statHtml}</td>
+                        <td>
+                            <div style="display: flex; gap: 8px;">
+                                <button class="btn btn-small btn-blue" data-id="${s.id}" onclick="checkEligibility(${s.id}, this)">Evaluate Email ✉️</button>
+                                <button class="btn btn-small btn-red" onclick="deleteStudent(${s.id})">Delete</button>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            });
+        }
+
+        async function addStudent() {
+            const name = document.getElementById('studentName').value;
+            const rollNumber = document.getElementById('rollNumber').value;
+            const course = document.getElementById('course').value;
+            const email = document.getElementById('studentEmail').value;
+
+            if (!name || !rollNumber) { showToast('Name and Roll Number are minimum requirements!', 'error'); return; }
+
+            try {
+                await fetch(`${API}/api/students`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name, rollNumber, course, email })
+                });
+
+                showToast('Success! Student added to master database.');
+                document.getElementById('studentName').value = '';
+                document.getElementById('rollNumber').value = '';
+                document.getElementById('course').value = '';
+                document.getElementById('studentEmail').value = '';
+                loadStudents();
+            } catch (e) { showToast('Failed to save student record.', 'error'); }
+        }
+
+        async function deleteStudent(id) {
+            if (confirm('Warning: Dropping a student permanently purges their record. Proceed?')) {
+                try {
+                    const res = await fetch(`${API}/api/students/${id}`, { method: 'DELETE' });
+                    if (!res.ok) throw new Error('API reported failure');
+                    showToast('Record purged correctly.');
+                    loadStudents();
+                } catch (e) { showToast('Purge encountered an error.', 'error'); }
+            }
+        }
+
+        async function checkEligibility(id, btn) {
+            const defaultText = btn.innerHTML;
+            btn.innerHTML = 'Sending... ⏳';
+            btn.disabled = true;
+            try {
+                const res = await fetch(`${API}/api/students/${id}/check-eligibility`, { method: 'POST' });
+                const msg = await res.text();
+                if (msg.includes('Missing')) {
+                    showToast(msg, 'error');
+                } else {
+                    showToast(msg, 'success');
+                }
+            } catch (e) {
+                showToast('Failed to request evaluation.', 'error');
+            } finally {
+                btn.innerHTML = defaultText;
+                btn.disabled = false;
+            }
+        }
+
+        async function evaluateAllStudents(btn) {
+            if (!confirm('WARNING: This will comprehensively run evaluations and dispatch formal emails to EVERY targetable student displayed in this list. Proceed securely?')) return;
+
+            const originalText = btn.innerHTML;
+            btn.innerHTML = 'Executing Global Batch... ⏳';
+            btn.disabled = true;
+
+            const targetNodes = document.querySelectorAll('#studentTable button.btn-blue');
+            let successHits = 0;
+            let missingHits = 0;
+
+            for (const userNode of targetNodes) {
+                if (userNode.innerText.includes('Evaluate')) {
+                    const sid = userNode.getAttribute('data-id');
+                    if (sid) {
+                        try {
+                            const res = await fetch(`${API}/api/students/${sid}/check-eligibility`, { method: 'POST' });
+                            const msg = await res.text();
+
+                            if (msg.includes('Missing') || msg.includes('Warning')) {
+                                missingHits++;
+                            } else {
+                                successHits++;
+                            }
+                        } catch (e) {
+                            missingHits++;
+                        }
+                    }
+                }
+            }
+
+            showToast(`GLOBAL BATCH COMPLETE: ${successHits} formal notices securely dispatched. ${missingHits} skipped/failed missing emails.`, 'success');
+            btn.innerHTML = originalText;
+            btn.disabled = false;
+        }
+
+        function renderCalendarUI(dateStr, todayStr, completedDatesSet) {
+            const row = document.getElementById('calendarRow');
+            if (!row) return;
+
+            const [y, m, d] = dateStr.split('-');
+            if (!y || !m || !d) return;
+
+            const year = parseInt(y, 10);
+            const month = parseInt(m, 10) - 1;
+            const selectedDay = parseInt(d, 10);
+            const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+            const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+            const uiTitle = document.getElementById('uiMonthYear');
+            if (uiTitle) uiTitle.innerText = `${monthNames[month]} ${year}`;
+
+            row.innerHTML = '';
+            for (let i = 1; i <= daysInMonth; i++) {
+                const iterDate = new Date(year, month, i);
+                const dayName = iterDate.toLocaleDateString('en-US', { weekday: 'short' });
+
+                const mm = String(month + 1).padStart(2, '0');
+                const dd = String(i).padStart(2, '0');
+                const iterDateStr = `${year}-${mm}-${dd}`;
+
+                const isSelected = i === selectedDay;
+                const isFuture = iterDateStr > todayStr;
+                const hasData = completedDatesSet && completedDatesSet.has(iterDateStr);
+
+                let btnCoreStyle = `position: relative; min-width: 70px; padding: 12px 5px; border-radius: 12px; text-align: center; border: 1px solid ${isSelected ? 'var(--primary)' : 'var(--glass-border)'}; background: ${isSelected ? 'var(--primary)' : 'var(--glass-bg)'}; color: ${isSelected ? '#fff' : 'var(--text-main)'}; transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); flex-shrink: 0; box-shadow: ${isSelected ? '0 4px 15px rgba(56, 189, 248, 0.3)' : 'none'}; opacity: ${isSelected ? '1' : '0.7'}; user-select: none;`;
+
+                let clickHandler = `selectCalendarDate('${iterDateStr}')`;
+                let hoverHandler = `onmouseover="this.style.opacity='1'" onmouseout="if(!${isSelected}) this.style.opacity='0.7'"`;
+
+                if (isFuture) {
+                    btnCoreStyle += ` cursor: not-allowed; opacity: 0.3; background: var(--bg-base);`;
+                    clickHandler = `showToast('Cannot select future dates for attendance.', 'error')`;
+                    hoverHandler = ``;
+                } else {
+                    btnCoreStyle += ` cursor: pointer;`;
+                }
+
+                let indicatorHtml = '';
+                if (hasData && !isSelected) {
+                    indicatorHtml = `<div style="position:absolute; top:8px; right:8px; width:6px; height:6px; border-radius:50%; background:var(--success); box-shadow: 0 0 5px var(--success);"></div>`;
+                } else if (hasData && isSelected) {
+                    indicatorHtml = `<div style="position:absolute; top:8px; right:8px; width:6px; height:6px; border-radius:50%; background:#fff; box-shadow: 0 0 5px rgba(255,255,255,0.5);"></div>`;
+                }
+
+                row.innerHTML += `
+                    <div style="${btnCoreStyle}" onclick="${clickHandler}" ${hoverHandler}>
+                        ${indicatorHtml}
+                        <div style="font-size: 11px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.5px;">${dayName}</div>
+                        <div style="font-size: 20px; font-weight: 700; margin-top: 4px;">${i}</div>
+                    </div>
+                `;
+            }
+
+            setTimeout(() => {
+                const selectedEl = row.querySelector('div[style*="background: var(--primary)"]');
+                if (selectedEl && row.scrollWidth > row.clientWidth) {
+                    const scrollLeft = selectedEl.offsetLeft - (row.clientWidth / 2) + (selectedEl.clientWidth / 2);
+                    row.scrollTo({ left: scrollLeft, behavior: 'smooth' });
+                }
+            }, 50);
+        }
+
+        function selectCalendarDate(dateStr) {
+            document.getElementById('bulkAttDate').value = dateStr;
+            loadBulkAttendance();
+        }
+
+        // --- ATTENDANCE LOGIC ---
+        async function loadBulkAttendance() {
+            const dateInput = document.getElementById('bulkAttDate');
+
+            const todayObj = new Date();
+            const offset = todayObj.getTimezoneOffset();
+            const localTodayStr = new Date(todayObj.getTime() - (offset * 60 * 1000)).toISOString().split('T')[0];
+
+            if (!dateInput.value) {
+                dateInput.value = localTodayStr;
+            }
+            if (dateInput.value > localTodayStr) {
+                showToast('Future dates disabled. Switched to today.', 'error');
+                dateInput.value = localTodayStr;
+            }
+            const date = dateInput.value;
+
+            // Query Base Master List strictly first to dynamically generate Course drop-down values
+            const attCourseSelect = document.getElementById('attCourseFilter');
+            let targetCourse = "ALL";
+
+            const res = await fetch(`${API}/api/students`);
+            let students = await res.json();
+
+            if (attCourseSelect) {
+                const uniqueCourses = [...new Set(students.map(s => s.course).filter(c => c))];
+                const prevValue = attCourseSelect.value;
+                attCourseSelect.innerHTML = '';
+
+                if (currentUser && currentUser.department) {
+                    attCourseSelect.innerHTML += `<option value="${currentUser.department}">${currentUser.department} Only</option>`;
+                    attCourseSelect.value = currentUser.department;
+                    attCourseSelect.disabled = true;
+                    targetCourse = currentUser.department;
+                } else {
+                    attCourseSelect.innerHTML = '<option value="ALL">All Departments</option>';
+                    uniqueCourses.forEach(c => {
+                        attCourseSelect.innerHTML += `<option value="${c}">${c}</option>`;
+                    });
+                    if (prevValue && uniqueCourses.includes(prevValue)) {
+                        attCourseSelect.value = prevValue;
+                    }
+                    targetCourse = attCourseSelect.value;
+                }
+            } else if (currentUser && currentUser.department) {
+                targetCourse = currentUser.department;
+            }
+
+            // Fetch natively to determine universally completed dates globally for UI indicators
+            let completedDatesSet = new Set();
+            try {
+                const allAttRes = await fetch(`${API}/api/attendance`);
+                let allAttData = await allAttRes.json();
+                if (targetCourse !== "ALL") {
+                    allAttData = allAttData.filter(a => a.student.course && a.student.course.toLowerCase() === targetCourse.toLowerCase());
+                }
+                allAttData.forEach(a => completedDatesSet.add(a.date));
+            } catch (e) { }
+
+            if (typeof renderCalendarUI === 'function') renderCalendarUI(date, localTodayStr, completedDatesSet);
+
+            // Now safely filter down the previously fetched Master List for Display List tracking
+            if (targetCourse !== "ALL") {
+                students = students.filter(s => s.course && s.course.toLowerCase() === targetCourse.toLowerCase());
+            }
+
+            const attRes = await fetch(`${API}/api/attendance/by-date?date=${date}`);
+            const attendances = await attRes.json();
+
+            const attMap = {};
+            attendances.forEach(a => attMap[a.student.id] = a.status);
+
+            const tbody = document.getElementById('bulkAttTable');
+            tbody.innerHTML = '';
+
+            if (students.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="3" class="text-center" style="padding:30px; color:var(--text-muted);">No students enrolled to mark.</td></tr>`;
+                return;
+            }
+
+            students.forEach(s => {
+                const currentStatus = attMap[s.id];
+                let actionsHtml = '';
+
+                if (currentStatus === 'Present') {
+                    actionsHtml = `
+                        <span class="status-badge badge-present" style="margin-right: 15px;">✅ Present</span>
+                        <button class="btn btn-small" style="background:var(--bg-base); color:var(--text-main); border:1px solid var(--glass-border);" onclick="submitSingleAttendance(${s.id}, 'Absent', this)">Change to Absent ❌</button>
+                    `;
+                } else if (currentStatus === 'Absent') {
+                    actionsHtml = `
+                        <span class="status-badge badge-absent" style="margin-right: 15px;">❌ Absent</span>
+                        <button class="btn btn-small" style="background:var(--bg-base); color:var(--text-main); border:1px solid var(--glass-border);" onclick="submitSingleAttendance(${s.id}, 'Present', this)">Change to Present ✅</button>
+                    `;
+                } else {
+                    actionsHtml = `
+                        <button class="btn btn-small btn-green" onclick="submitSingleAttendance(${s.id}, 'Present', this)">Mark Present ✅</button>
+                        <button class="btn btn-small btn-red" onclick="submitSingleAttendance(${s.id}, 'Absent', this)">Mark Absent ❌</button>
+                    `;
+                }
+
+                tbody.innerHTML += `
+                    <tr>
+                        <td>
+                            <strong style="font-size:16px;">${s.name}</strong><br>
+                            <span style="color:var(--text-muted); font-size:13px;">${s.course}</span>
+                        </td>
+                        <td><span style="font-family:monospace; font-size:14px; color:var(--text-main); opacity:0.8; font-weight:600;">${s.rollNumber}</span></td>
+                        <td>
+                            <div style="display: flex; align-items: center; gap: 8px;">
+                                ${actionsHtml}
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            });
+        }
+
+        async function submitSingleAttendance(studentId, status, btn) {
+            const date = document.getElementById('bulkAttDate').value;
+            if (!date) { showToast('Please select a log date first!', 'error'); return; }
+
+            const container = btn.parentElement;
+            container.innerHTML = '<span style="color:var(--text-muted); font-size:14px; font-weight:600;">Saving... ⏳</span>';
+
+            try {
+                await fetch(`${API}/api/attendance`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ student: { id: studentId }, date, status })
+                });
+
+                showToast(`${status} logged for student!`, 'success');
+
+                const badgeClass = status === 'Present' ? 'badge-present' : 'badge-absent';
+                const icon = status === 'Present' ? '✅' : '❌';
+                const inverseStatus = status === 'Present' ? 'Absent' : 'Present';
+                const inverseIcon = status === 'Present' ? '❌' : '✅';
+
+                container.innerHTML = `
+                    <span class="status-badge ${badgeClass}" style="margin-right: 15px;">${icon} ${status}</span>
+                    <button class="btn btn-small" style="background:var(--bg-base); color:var(--text-main); border:1px solid var(--glass-border);" onclick="submitSingleAttendance(${studentId}, '${inverseStatus}', this)">Change to ${inverseStatus} ${inverseIcon}</button>
+                `;
+
+            } catch (e) {
+                showToast('Failed to save log.', 'error');
+                container.innerHTML = `<span class="status-badge badge-absent">Error</span>`;
+            }
+        }
+
+        // --- REPORT LOGIC ---
+        async function loadReport() {
+            try {
+                // Determine Department Target Context
+                const reportCourseSelect = document.getElementById('reportCourseFilter');
+                let targetCourse = "ALL";
+
+                const stuRes = await fetch(`${API}/api/students`);
+                let students = await stuRes.json();
+
+                if (reportCourseSelect) {
+                    const uniqueCourses = [...new Set(students.map(s => s.course).filter(c => c))];
+                    const prevValue = reportCourseSelect.value;
+                    reportCourseSelect.innerHTML = '';
+
+                    if (currentUser && currentUser.department) {
+                        reportCourseSelect.innerHTML += `<option value="${currentUser.department}">${currentUser.department} Only</option>`;
+                        reportCourseSelect.value = currentUser.department;
+                        reportCourseSelect.disabled = true;
+                        targetCourse = currentUser.department;
+                    } else {
+                        reportCourseSelect.innerHTML = '<option value="ALL">All Departments</option>';
+                        uniqueCourses.forEach(c => {
+                            reportCourseSelect.innerHTML += `<option value="${c}">${c}</option>`;
+                        });
+                        if (prevValue && uniqueCourses.includes(prevValue)) {
+                            reportCourseSelect.value = prevValue;
+                        }
+                        targetCourse = reportCourseSelect.value;
+                    }
+                } else if (currentUser && currentUser.department) {
+                    targetCourse = currentUser.department;
+                }
+
+                const res = await fetch(`${API}/api/attendance`);
+                let data = await res.json();
+
+                if (targetCourse !== "ALL") {
+                    data = data.filter(a => a.student.course && a.student.course.toLowerCase() === targetCourse.toLowerCase());
+                }
+
+                const filterDate = document.getElementById('reportDateFilter').value;
+
+                // Deduplicate historical data logs purely visually to scrub DB ghost records
+                const uniquePings = {};
+                data.forEach(a => {
+                    uniquePings[`${a.student.id}_${a.date}`] = a;
+                });
+                data = Object.values(uniquePings);
+
+                if (filterDate) {
+                    data = data.filter(a => a.date === filterDate);
+                }
+
+                // Calculate dash metrics
+                const totalLogs = data.length;
+                const presents = data.filter(a => a.status === 'Present').length;
+                const absents = totalLogs - presents;
+                const ratio = totalLogs === 0 ? 0 : Math.round((presents / totalLogs) * 100);
+
+                document.getElementById('reportTotalLogs').innerText = totalLogs;
+                document.getElementById('reportPresentLogs').innerText = presents;
+                document.getElementById('reportAbsentLogs').innerText = absents;
+                document.getElementById('reportAvgLogs').innerText = ratio + '%';
+
+                const tbody = document.getElementById('reportTable');
+                tbody.innerHTML = '';
+
+                if (data.length === 0) {
+                    tbody.innerHTML = `<tr><td colspan="3" class="text-center" style="color:var(--text-muted); padding:30px;">No logs exist for this query format.</td></tr>`;
+                    return;
+                }
+
+                // Sort descending by date (newest first)
+                data.sort((a, b) => new Date(b.date) - new Date(a.date));
+
+                data.forEach(a => {
+                    const badge = a.status === 'Present' ? 'badge-present' : 'badge-absent';
+                    const icon = a.status === 'Present' ? '✅' : '❌';
+                    tbody.innerHTML += `
+                        <tr>
+                            <td><strong style="font-size:15px">${a.student.name}</strong> <span style="font-size:12px; color:var(--text-muted)">(${a.student.rollNumber})</span></td>
+                            <td style="color:var(--text-muted); font-family:monospace; font-size:14px;">${a.date}</td>
+                            <td><span class="status-badge ${badge}">${icon} ${a.status}</span></td>
+                        </tr>
+                    `;
+                });
+            } catch (e) { showToast('Could not compile report.', 'error'); }
+        }
+
+        function clearReportFilter() {
+            document.getElementById('reportDateFilter').value = '';
+            const reportCourseSelect = document.getElementById('reportCourseFilter');
+            if (reportCourseSelect && !reportCourseSelect.disabled) {
+                reportCourseSelect.value = 'ALL';
+            }
+            loadReport();
+        }
+
+        // --- HALLTICKET LOGIC ---
+        function loadHallTicketStudents() {
+            if (globalStudentsData.length === 0) {
+                loadStudents().then(() => {
+                    renderHallTicketTable(globalStudentsData);
+                }).catch(() => {
+                    renderHallTicketTable([]);
+                });
+            } else {
+                renderHallTicketTable(globalStudentsData);
+            }
+        }
+
+        function filterHallTicketList() {
+            const query = document.getElementById('hallticketSearch').value.toLowerCase();
+            const filtered = globalStudentsData.filter(s =>
+                (s.name && s.name.toLowerCase().includes(query)) ||
+                (s.rollNumber && s.rollNumber.toLowerCase().includes(query))
+            );
+            renderHallTicketTable(filtered);
+        }
+
+        function renderHallTicketTable(data) {
+            const tbody = document.getElementById('hallticketTable');
+            if (!tbody) return;
+            tbody.innerHTML = '';
+
+            if (data.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="4" class="text-center" style="color:var(--text-muted); padding:30px;">No students found matching your criteria.</td></tr>`;
+                return;
+            }
+
+            // Using similar visually appealing rendering to previous sections
+            data.forEach(s => {
+                const st = globalStatsData[s.id];
+                const pct = (st && st.total > 0) ? Math.round((st.present / st.total) * 100) : 100;
+                let warningHtml = "";
+                if (pct < 80) {
+                    warningHtml = `<div style="color:#ef4444; font-size:12px; font-weight:bold; margin-top:5px; display:inline-block; background:rgba(239, 68, 68, 0.1); padding:2px 6px; border-radius:4px;">⚠️ Shortage (${pct}%)</div>`;
+                }
+
+                tbody.innerHTML += `
+                    <tr>
+                        <td>
+                            <strong style="font-size:16px;">${s.name}</strong><br>
+                            <span style="color:var(--text-muted); font-size:13px; background:rgba(255,255,255,0.06); padding:2px 6px; border-radius:4px;">${s.course || 'GTTC'}</span><br>
+                            ${warningHtml}
+                        </td>
+                        <td><span style="font-family:monospace; font-size:14px; color:var(--text-main); opacity:0.8; font-weight:600;">${s.rollNumber}</span></td>
+                        <td>${s.email ? `<span style="border-bottom:1px solid var(--glass-border);">${s.email}</span>` : '<span style="color:#64748b; font-style:italic;">Missing</span>'}</td>
+                        <td>
+                            <button class="btn btn-small btn-blue" onclick="generateHallTicket(${s.id})">Generate Hall Ticket 📄</button>
+                        </td>
+                    </tr>
+                `;
+            });
+        }
+
+        function buildTicketHtml(student) {
+            return `
+            <div id="htPdfRoot" style="padding: 10px; background: white; width: max-content;">
+                <div id="tempHallTicket" style="padding:20px; font-family:'Times New Roman', Times, serif; background:white; color:black; min-width:800px; width:max-content; font-size:13px; position:relative; box-sizing:border-box; border:2px solid black;">
+                
+                <!-- Header -->
+                <div style="display: flex; justify-content: space-between; border-bottom: 2px solid black; padding-bottom: 15px; align-items: flex-start;">
+                    <div style="display: flex; align-items: center; gap: 15px;">
+                        <div style="text-align: center; font-weight: bold; font-family: 'Arial Black', Arial, sans-serif;">
+                            <div style="font-size: 32px; letter-spacing: -1.5px; line-height: 1;">GTTC</div>
+                            <div style="font-size: 15px; font-weight: bold; font-family: Arial, sans-serif; letter-spacing: 1px;">BELAGAVI</div>
+                        </div>
+                        <div style="border: 2px solid black; padding: 6px 15px; font-weight: bold; font-size: 15px; margin-left: 20px;">STU-08</div>
+                    </div>
+                    <div style="text-align: right; font-family: Arial, sans-serif;">
+                        <div style="font-weight: bold; font-size: 15px;">FORM-02</div>
+                        <div style="font-weight: bold; font-size: 12px; margin-top: 6px;">GOVT. TOOL ROOM AND TRAINING CENTRE, Karnataka</div>
+                        <div style="font-size: 12px;">ADMISSION TICKET FOR THE EXAMINATION</div>
+                    </div>
+                </div>
+                
+                <!-- Course Info -->
+                <div style="text-align: center; border-bottom: 2px solid black; padding: 12px 0; font-weight: bold; font-family: Arial, sans-serif;">
+                    <div style="font-size: 13px;">COURSE: ${student.course ? student.course.toUpperCase() : 'DIPLOMA IN ARTIFICIAL INTELLIGENCE & MACHINE LEARNING'}</div>
+                    <div style="margin-top: 5px; font-size: 12px;">MONTH: APRIL/MAY, YEAR: 2026</div>
+                </div>
+                
+                <!-- Student details grid -->
+                <table style="width: 100%; border-collapse: collapse; font-family: Arial, sans-serif; border-bottom: 2px solid black;">
+                    <tr>
+                        <td style="border-right: 2px solid black; border-bottom: 1px solid black; padding: 10px; vertical-align: top; width: 60%;">
+                            <div style="font-size: 12px; font-weight: bold;">Name of the student</div>
+                            <div style="font-size: 11px; margin-bottom: 15px;">(as per SSLC marks card)</div>
+                            <div style="font-weight: bold; font-size: 16px;">${student.name.toUpperCase()}</div>
+                        </td>
+                        <td rowspan="2" style="width: 120px; border-right: 1px solid black; padding: 10px; text-align: center; vertical-align: top;">
+                            <div style="font-size: 12px; font-weight: bold;">Reg. No.</div>
+                            <div style="font-size: 16px; font-weight: bold; margin-top: 5px;">${student.rollNumber}</div>
+                        </td>
+                        <td rowspan="2" style="width: 140px; padding: 10px; text-align: center; vertical-align: middle;">
+                            <div style="border: 1px solid #555; height: 130px; display: block; box-sizing: border-box; padding-top: 40px; color: #555; font-size: 12px; line-height: 1.5;">
+                                Affix a recent<br>passport size<br>photograph
+                            </div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="border-right: 2px solid black; padding: 10px; vertical-align: top;">
+                            <div style="font-size: 12px; font-weight: bold;">Exam Appearing for</div>
+                            <div style="display: flex; gap: 15px; font-weight: bold; font-size: 12px; margin-top: 15px;">
+                                <div style="border: 1px solid black; padding: 3px 8px;">SEM 1</div>
+                                <div style="border: 1px solid black; padding: 3px 8px;">SEM 2</div>
+                                <div style="border: 1px solid black; padding: 3px 8px;">SEM 3</div>
+                                <div style="border: 1px solid black; padding: 3px 8px;">SEM 4</div>
+                            </div>
+                        </td>
+                    </tr>
+                </table>
+                
+                <!-- Subjects -->
+                <table style="width: 100%; border-collapse: collapse; font-family: Arial, sans-serif; font-size: 12px; text-align: center; font-weight: bold;">
+                    <tr>
+                        <td colspan="8" style="text-align: left; padding: 8px; border-bottom: 2px solid black;">SUBJECTS:</td>
+                    </tr>
+                    <tr>
+                        <td style="border: 1px solid black; border-left: none; padding: 8px; text-align: left;">1 sem<br>DAIML<br>C-24</td>
+                        <td style="border: 1px solid black; padding: 8px;">24AII11T</td>
+                        <td style="border: 1px solid black; padding: 8px;">24AII12T</td>
+                        <td style="border: 1px solid black; padding: 8px;">24AII13T</td>
+                        <td style="border: 1px solid black; padding: 8px;">24AII11P</td>
+                        <td style="border: 1px solid black; padding: 8px;">24AII12P</td>
+                        <td style="border: 1px solid black; padding: 8px;">24AII11A</td>
+                        <td style="border: 1px solid black; border-right: none; padding: 8px;">24AII12A</td>
+                    </tr>
+                    <tr>
+                        <td style="border: 1px solid black; border-left: none; padding: 8px; text-align: left;">2 sem<br>DAIML<br>C-24</td>
+                        <td style="border: 1px solid black; padding: 8px;">24AI21T</td>
+                        <td style="border: 1px solid black; padding: 8px;">24AI22T</td>
+                        <td style="border: 1px solid black; padding: 8px;">24AI23T</td>
+                        <td style="border: 1px solid black; padding: 8px;">24AI24P</td>
+                        <td style="border: 1px solid black; padding: 8px;">24AI25P</td>
+                        <td style="border: 1px solid black; padding: 8px;">24AI26P</td>
+                        <td style="border: 1px solid black; border-right: none; padding: 8px;">24AI27A</td>
+                    </tr>
+                    <tr>
+                        <td style="border: 1px solid black; border-left: none; padding: 8px; text-align: left;">3 sem<br>DAIML<br>C-24</td>
+                        <td style="border: 1px solid black; padding: 8px;">24AI31T</td>
+                        <td style="border: 1px solid black; padding: 8px;">24AI32T</td>
+                        <td style="border: 1px solid black; padding: 8px;">24AI33T</td>
+                        <td style="border: 1px solid black; padding: 8px;">24AI34T</td>
+                        <td style="border: 1px solid black; padding: 8px;">24AI35P</td>
+                        <td style="border: 1px solid black; padding: 8px;">24AI36P</td>
+                        <td style="border: 1px solid black; border-right: none; padding: 8px;">24AI37P</td>
+                    </tr>
+                    <tr>
+                        <td style="border: 1px solid black; border-left: none; padding: 8px; text-align: left;">4 sem<br>DAIML<br>C-24</td>
+                        <td style="border: 1px solid black; padding: 8px;">24AI41T</td>
+                        <td style="border: 1px solid black; padding: 8px;">24AI42T</td>
+                        <td style="border: 1px solid black; padding: 8px;">24AI43T</td>
+                        <td style="border: 1px solid black; padding: 8px;">24AI44T</td>
+                        <td style="border: 1px solid black; padding: 8px;">24AI41P</td>
+                        <td style="border: 1px solid black; padding: 8px;">24AI42P</td>
+                        <td style="border: 1px solid black; border-right: none; padding: 8px;">24AI43P</td>
+                    </tr>
+                    <tr>
+                        <td style="border: 1px solid black; border-left: none; border-bottom: 2px solid black; padding: 8px; text-align: left;">DAIML<br>C-24</td>
+                        <td style="border: 1px solid black; border-bottom: 2px solid black; padding: 8px;">--</td>
+                        <td style="border: 1px solid black; border-bottom: 2px solid black; padding: 8px;">--</td>
+                        <td style="border: 1px solid black; border-bottom: 2px solid black; padding: 8px;">--</td>
+                        <td style="border: 1px solid black; border-bottom: 2px solid black; padding: 8px;">--</td>
+                        <td style="border: 1px solid black; border-bottom: 2px solid black; padding: 8px;">--</td>
+                        <td style="border: 1px solid black; border-bottom: 2px solid black; padding: 8px;">--</td>
+                        <td style="border: 1px solid black; border-bottom: 2px solid black; border-right: none; padding: 8px;">24AI44P</td>
+                    </tr>
+                </table>
+
+                <!-- Footer Signatures -->
+                <div style="display: flex; justify-content: space-between; align-items: flex-end; padding: 60px 20px 20px 20px; font-weight: bold; font-family: Arial, sans-serif; font-size: 12px;">
+                    <div style="text-align: center;">Candidate</div>
+                    <div style="text-align: center;">Batch Incharge</div>
+                    <div style="text-align: center;">HOD</div>
+                    <div style="text-align: center;">Principal</div>
+                </div>
+                
+                </div>
+            </div>
+            `;
+        }
+
+        function generateHallTicket(studentId) {
+            const student = globalStudentsData.find(s => s.id === studentId);
+            if (!student) return;
+
+            // Validate Attendance logic
+            const st = globalStatsData[student.id];
+            const pct = (st && st.total > 0) ? Math.round((st.present / st.total) * 100) : 100;
+
+            const warningEl = document.getElementById('htWarning');
+            if (pct < 80) {
+                warningEl.style.display = 'block';
+                warningEl.innerText = `⚠️ ATTENDANCE SHORTAGE (${pct}%). Issue strictly at your discretion.`;
+            } else {
+                warningEl.style.display = 'none';
+            }
+
+            window.currentHtStudentId = studentId;
+            document.getElementById('htContent').innerHTML = buildTicketHtml(student);
+            document.getElementById('htModal').style.display = 'flex';
+        }
+
+        function closeHtModal() {
+            document.getElementById('htModal').style.display = 'none';
+            window.currentHtStudentId = null;
+        }
+
+        function downloadCurrentHt() {
+            if(!window.currentHtStudentId) return;
+            const student = globalStudentsData.find(s => s.id === window.currentHtStudentId);
+            if (!student) return;
+
+            // Create a clean, purely positioned absolute wrapper starting at EXACTLY 0,0 on the body coordinate axis.
+            // Putting it at z-index: -1 keeps it behind the active modal so it's invisible to the user 
+            // but fully rendered in mathematically positive coordinate space to completely eliminate html2canvas modal offset bugs!
+            const wrapper = document.createElement('div');
+            wrapper.style.position = 'absolute';
+            wrapper.style.top = '0px';
+            wrapper.style.left = '0px';
+            wrapper.style.zIndex = '-1'; 
+            wrapper.style.background = 'white'; 
+            
+            wrapper.innerHTML = buildTicketHtml(student);
+            document.body.appendChild(wrapper);
+
+            const targetEl = wrapper.firstElementChild; 
+            
+            // Calculate format size based purely on the unconstrained clean DOM
+            const pxWidth = targetEl.scrollWidth;
+            const pxHeight = targetEl.scrollHeight;
+
+            const opt = {
+                margin:       0,
+                filename:     `GTTC_HallTicket_${student.rollNumber}.pdf`,
+                image:        { type: 'jpeg', quality: 1.0 },
+                html2canvas:  { 
+                    scale: 2, 
+                    useCORS: true,
+                    width: pxWidth,       // Force canvas width securely
+                    height: pxHeight,     // Force canvas height securely
+                    windowWidth: pxWidth, // Pretend window perfectly wraps the element natively
+                    x: 0,                 // Lock canvas start to absolute 0
+                    y: 0,                 // Lock canvas start to absolute 0
+                    scrollX: 0,
+                    scrollY: 0
+                },
+                jsPDF:        { 
+                    unit: 'px', 
+                    format: [pxWidth, pxHeight], 
+                    orientation: pxWidth > pxHeight ? 'l' : 'p', 
+                    hotfixes: ['px_scaling'] 
+                }
+            };
+
+            const btn = document.getElementById('htDownloadBtn');
+            const originalText = btn.innerHTML;
+            btn.innerHTML = 'Generating... ⏳';
+            btn.disabled = true;
+
+            if(typeof showToast === 'function') showToast('Compiling PDF Document... ⏳');
+            
+            if(window.html2pdf) {
+                html2pdf().set(opt).from(targetEl).save().then(() => {
+                    document.body.removeChild(wrapper);
+                    btn.innerHTML = originalText;
+                    btn.disabled = false;
+                    closeHtModal();
+                    if(typeof showToast === 'function') showToast('Hall Ticket saved successfully!', 'success');
+                }).catch(err => {
+                    document.body.removeChild(wrapper);
+                    btn.innerHTML = originalText;
+                    btn.disabled = false;
+                    if(typeof showToast === 'function') showToast('Failed to generate PDF.', 'error');
+                    console.error(err);
+                });
+            } else {
+                document.body.removeChild(wrapper);
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+                if(typeof showToast === 'function') showToast('html2pdf library missing. Please check connection.', 'error');
+            }
+        }
+    </script>
+</body>
+
+</html>
